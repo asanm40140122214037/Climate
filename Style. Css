@@ -1,0 +1,120 @@
+Here's a simple example of a C program that parses and applies a CSS style sheet to an HTML document:
+
+style.css
+```
+body {
+    background-color: #f2f2f2;
+}
+
+h1 {
+    color: #00698f;
+}
+
+p {
+    font-size: 18px;
+    font-family: Arial, sans-serif;
+}
+```
+
+index.html
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Styled HTML Document</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <h1>Welcome to my styled HTML document!</h1>
+    <p>This is a paragraph of text.</p>
+</body>
+</html>
+```
+
+css_parser.c
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// CSS property structure
+typedef struct {
+    char* name;
+    char* value;
+} CSSProperty;
+
+// CSS rule structure
+typedef struct {
+    char* selector;
+    CSSProperty* properties;
+    int property_count;
+} CSSRule;
+
+// Parse CSS file and return a list of CSS rules
+CSSRule* parse_css_file(char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("fopen");
+        exit(1);
+    }
+
+    CSSRule* rules = NULL;
+    int rule_count = 0;
+
+    char buffer[1024];
+    while (fgets(buffer, 1024, file) != NULL) {
+        // Parse CSS rule
+        CSSRule rule;
+        rule.selector = NULL;
+        rule.properties = NULL;
+        rule.property_count = 0;
+
+        // Extract selector
+        char* selector_start = strchr(buffer, '{');
+        if (selector_start != NULL) {
+            *selector_start = '\0';
+            rule.selector = strdup(buffer);
+        }
+
+        // Extract properties
+        char* property_start = strchr(buffer, '{') + 1;
+        while (property_start != NULL) {
+            // Extract property name and value
+            char* property_name_end = strchr(property_start, ':');
+            if (property_name_end != NULL) {
+                *property_name_end = '\0';
+                char* property_name = strdup(property_start);
+                char* property_value = strdup(property_name_end + 1);
+
+                // Add property to rule
+                rule.properties = realloc(rule.properties, (rule.property_count + 1) * sizeof(CSSProperty));
+                rule.properties[rule.property_count].name = property_name;
+                rule.properties[rule.property_count].value = property_value;
+                rule.property_count++;
+            }
+
+            // Move to next property
+            property_start = strchr(property_start, ';') + 1;
+        }
+
+        // Add rule to list
+        rules = realloc(rules, (rule_count + 1) * sizeof(CSSRule));
+        rules[rule_count] = rule;
+        rule_count++;
+    }
+
+    fclose(file);
+    return rules;
+}
+
+int main() {
+    // Parse CSS file
+    CSSRule* rules = parse_css_file("style.css");
+
+    // Apply CSS rules to HTML document
+    // ...
+
+    return 0;
+}
+```
