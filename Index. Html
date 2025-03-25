@@ -1,0 +1,104 @@
+Here's a simple example of an HTTP server written in C that serves an `index.html` file:
+
+index.html
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple HTTP Server</title>
+</head>
+<body>
+    <h1>Welcome to my simple HTTP server!</h1>
+</body>
+</html>
+```
+
+server.c
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define PORT 8080
+#define BUFFER_SIZE 1024
+
+void handle_request(int client_socket) {
+    char buffer[BUFFER_SIZE];
+    int bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0);
+    if (bytes_received < 0) {
+        perror("recv");
+        return;
+    }
+
+    // Send HTTP response
+    char* response = "HTTP/1.1 200 OK\r\n\r\n";
+    send(client_socket, response, strlen(response), 0);
+
+    // Send index.html file
+    FILE* file = fopen("index.html", "r");
+    if (file == NULL) {
+        perror("fopen");
+        return;
+    }
+
+    char file_buffer[BUFFER_SIZE];
+    while (fgets(file_buffer, BUFFER_SIZE, file) != NULL) {
+        send(client_socket, file_buffer, strlen(file_buffer), 0);
+    }
+
+    fclose(file);
+}
+
+int main() {
+    int server_socket, client_socket;
+    struct sockaddr_in server_address, client_address;
+    socklen_t client_address_length = sizeof(client_address);
+
+    // Create server socket
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket < 0) {
+        perror("socket");
+        exit(1);
+    }
+
+    // Set server address
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(PORT);
+    inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr);
+
+    // Bind server socket
+    if (bind(server_socket, (struct sockaddr*)&server_address, sizeof(server_address)) < 0) {
+        perror("bind");
+        exit(1);
+    }
+
+    // Listen for incoming connections
+    if (listen(server_socket, 3) < 0) {
+        perror("listen");
+        exit(1);
+    }
+
+    printf("Server listening on port %d...\n", PORT);
+
+    while (1) {
+        // Accept incoming connection
+        client_socket = accept(server_socket, (struct sockaddr*)&client_address, &client_address_length);
+        if (client_socket < 0) {
+            perror("accept");
+            continue;
+        }
+
+        printf("Connection accepted from client IP address %s and port %d...\n",
+               inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
+
+        handle_request(client_socket);
+
+        close(client_socket);
+    }
+
+    return 0;
+}
+```
