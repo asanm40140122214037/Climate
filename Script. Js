@@ -1,0 +1,36 @@
+Here's a simple example of a C program that interprets and executes a JavaScript-like script:
+
+script.js
+```
+print("Hello, World!");
+
+x = 5;
+y = 10;
+
+print("x + y =", x + y);
+
+if (x > 10) {
+    print("x is greater than 10");
+} else {
+    print("x is less than or equal to 10");
+}
+```
+
+interpreter.c
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// Token types
+typedef enum {
+    TOKEN_PRINT,
+    TOKEN_IDENTIFIER,
+    TOKEN_NUMBER,
+    TOKEN_PLUS,
+    TOKEN_EQUAL,
+    TOKEN_GREATER_THAN,
+    TOKEN_LESS_THAN,
+    TOKEN_LEFT_PAREN,
+```
